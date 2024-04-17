@@ -6,6 +6,7 @@ import PatternResponses from './utils/PatternResponses';
 import DocumentModel from './models/Documents';
 import Document from './routes/documents';
 import { errorHandler } from './config/errorHandler';
+import cors from 'cors';
 
 if(process.env.ENV == 'HOMOLOG'){
     DocumentModel.sync()
@@ -13,6 +14,7 @@ if(process.env.ENV == 'HOMOLOG'){
 
 const app = express();
 
+app.use(cors())
 app.use(express.static(path.join(__dirname, '../public')))
 app.use(limiter);
 app.use(express.json())
