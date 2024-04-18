@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional } from "sequelize";
+import { DataTypes, Model, Optional, QueryTypes } from "sequelize";
 import sequelize from "../config/mysql";
 import { DocumentCreation, DocumentUpdate } from "../types/DocumentType";
 
@@ -36,6 +36,24 @@ class Document extends Model<DocumentAttributes, DocumentCreationAttributes> imp
             console.error('Error updating document:', error);
             return false;
         }
+    }
+    static async findDocuments(limit: number, offset: number): Promise<Document[] | null>{
+        try {
+            const rawQuery = `SELECT id, title, path, description, mimetype,
+            DATE_FORMAT(createdAt, '%d/%m/%Y %H:%i') AS createdAt,
+            DATE_FORMAT(updatedAt, '%d/%m/%Y %H:%i') AS updatedAt
+            FROM documents LIMIT :limit OFFSET :offset`
+
+            const data: Document[] = await sequelize.query(rawQuery, {
+                replacements: {limit, offset},
+                type: QueryTypes.SELECT
+            })
+            return data
+        } catch (error) {
+            console.error('Error updating document:', error);
+            return null;
+        }
+
     }
 }
 

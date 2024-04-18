@@ -9,11 +9,18 @@ export class DocumentsController {
     static async listAll(req: Request, res: Response){
         const {limit, offset} = req.query;
 
-        const documents = await Document.findAll({
-            limit: parseInt(limit as string), offset: parseInt(offset as string)
-        });
+        let parsedLimit, parsedOffset;
+        if(!limit || !offset){
+            parsedLimit = 10,
+            parsedOffset = 0
+        } else{
+            parsedLimit = parseInt(limit as string);
+            parsedOffset = parseInt(offset as string);
+        }
 
-        if(!documents) throw new Error(`Couldn't make the search for documents`)
+        const documents = await Document.findDocuments(parsedLimit, parsedOffset);
+
+        if(!documents) return PatternResponses.error.noRegister(res)
 
         return res.json(documents);
     }
@@ -31,7 +38,7 @@ export class DocumentsController {
         const data = req.body;
         const file = req.file;
 
-        if(!file) throw new Error('No file uploaded')
+        if(!file) return PatternResponses.error.notCreated(res, 'No file uploaded')
 
         const {error} = documentCreation.validate(data);
         if (error) return res.status(400).json({ error: error.details[0].message });
@@ -49,7 +56,7 @@ export class DocumentsController {
             return PatternResponses.error.notCreated(res, 'document');
         }
 
-        return PatternResponses.success.created(res);
+        return res.json(newFile);
     }
 
     static async createWithContent(req: Request, res: Response){
