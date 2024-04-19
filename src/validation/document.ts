@@ -16,3 +16,10 @@ export const documentUpdate = Joi.object({
     title: Joi.string().min(5).max(100),
     description: Joi.string().min(5).max(2000)
 })
+
+export const documentUpdateFile = Joi.object({
+    id: Joi.number().min(0).required(),
+    title: Joi.string().min(5).max(100),
+    description: Joi.string().min(5).max(2000),
+    originalPath: Joi.string().required()
+})

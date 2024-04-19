@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Document from "../models/Documents";
-import { documentCreation, documentCreationContent, documentUpdate } from "../validation/document";
+import { documentCreation, documentCreationContent, documentUpdate, documentUpdateFile } from "../validation/document";
 import PatternResponses from "../utils/PatternResponses";
 import { DocumentCreation } from "../types/DocumentType";
 import fs from 'fs'
@@ -59,6 +59,34 @@ export class DocumentsController {
         return res.json(newFile);
     }
 
+    static async updateWithFile(req: Request, res: Response){
+        const data = req.body;
+        const file = req.file;
+
+        if(!file) return PatternResponses.error.notCreated(res, 'No file uploaded')
+
+        const {error} = documentUpdateFile.validate(data);
+        if (error) return res.status(400).json({ error: error.details[0].message });
+
+        const type = file.mimetype.split('/')[0]
+        const updateData = {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            originalPath: data.originalPath,
+            path: file.filename,
+            mimetype: type 
+        }
+
+        const updatedFile = await Document.updateWithFile(updateData);
+        if(!updatedFile){
+            fs.unlinkSync(`./public/documents/${type}/${file.filename}`)
+            return PatternResponses.error.notCreated(res, 'document');
+        }
+        fs.unlinkSync(`./public/documents/${type}/${data.originalPath}`)
+        return res.json(updateData);
+    }
+
     static async createWithContent(req: Request, res: Response){
         const data = req.body;
 
@@ -79,11 +107,16 @@ export class DocumentsController {
     }
 
     static async delete(req: Request, res: Response){
-        const id = req.params;
+        const {id} = req.params;
+        console.log(id)
 
-        const deleteDocument = await Document.destroy({where:id});
+        if(!id) return 
 
-        if(!deleteDocument) return PatternResponses.error.notDeleted(res);
+        const document = await Document.findByPk(id);
+        if(!document) return PatternResponses.error.noRegister(res)
+
+        fs.unlinkSync(`./public/documents/${document.mimetype}/${document.path}`)
+        await document.destroy();
 
         return PatternResponses.success.deleted(res)
     }

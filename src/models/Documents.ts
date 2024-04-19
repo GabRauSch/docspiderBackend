@@ -37,6 +37,26 @@ class Document extends Model<DocumentAttributes, DocumentCreationAttributes> imp
             return false;
         }
     }
+
+    static async updateWithFile(data: any): Promise<Document | null>{
+        try {
+            const [rowsAffected] = await Document.update({
+                title: data.title, description: data.description, path: data.path
+            }, {
+                where: {
+                    id: data.id
+                }
+            });
+            if(rowsAffected > 0){
+                const updated = await Document.findByPk(data.id);
+                return updated
+            }
+            return null
+        } catch (error) {
+            console.error(error);
+            return null
+        }
+    }
     static async findDocuments(limit: number, offset: number): Promise<Document[] | null>{
         try {
             const rawQuery = `SELECT id, title, path, description, mimetype,
